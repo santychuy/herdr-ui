@@ -29,6 +29,8 @@ export default class Spaces extends View {
   init(_props, cx) {
     this.threadUI = new ThreadList();
     this.threads = [];
+    this.foldedProjects = new Set(JSON.parse(localStorage.getItem("projects.folded") ?? "[]"));
+    this.hoveredProject = null;
     cx.spawn(async cx => {
       for (;;) {
         const command = await nextCommand();
@@ -39,8 +41,7 @@ export default class Spaces extends View {
           const space = spaces().find(s => s.active);
           if (space) {
             const key = `${space.id}:${command}`;
-            this.threadUI.expanded.has(key) ? this.threadUI.expanded.delete(key) : this.threadUI.expanded.add(key);
-            localStorage.setItem("threads.expanded", JSON.stringify([...this.threadUI.expanded]));
+            this.threadUI.toggleShelf(key);
           }
         }
         cx.notify();
@@ -281,7 +282,7 @@ export default class Spaces extends View {
   grouped(t) {
     const rows = this.ordered();
     const draw = r => v_flex().flex_none().child(this.row(r, t))
-      .when(r.w.active, el => el.child(this.threadUI.project(r.w, this.threads, t)));
+      .when(!this.foldedProjects.has(r.w.id), el => el.child(this.threadUI.project(r.w, this.threads, t)));
     const remote = [...new Set([...rows.map(r => r.w.machine).filter(Boolean), ...this.machines.map(m => m.name), ...Object.keys(this.reconnecting)])].sort();
     const loading = m => {
       const layout = machines().find(k => k.name === m)?.layout;
@@ -359,6 +360,30 @@ export default class Spaces extends View {
       .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`\u2193${g.behind}`)));
   }
 
+  projectIcon(space, fill, tree, t) {
+    const folded = this.foldedProjects.has(space.id);
+    const reveal = this.hoveredProject === space.id;
+    return div().id(`project-fold-${space.id}`).relative().size(18).flex_none().rounded(5)
+      .cursor_pointer().role("button").accessibility_label(`${folded ? "Expand" : "Collapse"} threads in ${space.name}`)
+      .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+      .on_mouse_up("left", (_e, cx) => cx.stop_propagation())
+      .on_click((_e, cx) => {
+        cx.stop_propagation();
+        folded ? this.foldedProjects.delete(space.id) : this.foldedProjects.add(space.id);
+        localStorage.setItem("projects.folded", JSON.stringify([...this.foldedProjects]));
+        cx.notify();
+      })
+      .child(h_flex().id(`project-avatar-${space.id}`).absolute().size_full().rounded(5)
+        .items_center().justify_center().text_size(10.5).font_bold().text_color(tree ? t.dim : "#ffffff")
+        .when(!tree, el => el.bg(fill))
+        .opacity(reveal ? 0 : 1).transition("opacity", { duration: 140, easing: "ease-in-out" })
+        .child(tree ? svg("mods/workspace-chrome/branch.svg").size(13) : [...space.name][0]?.toUpperCase() ?? "?"))
+      .child(h_flex().id(`project-chevron-${space.id}`).absolute().size_full().items_center().justify_center()
+        .text_color(t.muted).hover(style => style.text_color(t.foreground))
+        .opacity(reveal ? 1 : 0).transition("opacity", { duration: 140, easing: "ease-in-out" })
+        .child(svg(`mods/workspace-chrome/chevron-${folded ? "right" : "down"}.svg`).size(13)));
+  }
+
   row({ w, i, g, tree }, t) {
     const on = w.active;
     const colors = shared("space.colors") ?? {};
@@ -403,12 +428,17 @@ export default class Spaces extends View {
         cx.notify();
       })
       .on_mouse_down("right", () => this.menu(w))
+      .on_hover((hovered, cx) => {
+        if (hovered) this.hoveredProject = w.id;
+        else if (this.hoveredProject === w.id) this.hoveredProject = null;
+        cx.notify();
+      })
       .child(
         h_flex()
           .gap(7)
           .items_center()
-          .when(Boolean(tree), el => el.pl(22).child(svg("mods/workspace-chrome/branch.svg").size(13).text_color(t.dim)))
-          .when(!tree, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child([...w.name][0]?.toUpperCase() ?? "?")))
+          .when(Boolean(tree), el => el.pl(22))
+          .child(this.projectIcon(w, fill, tree, t))
           .child(div().flex_shrink(1).min_w(0).max_w(150).truncate().text_color(on ? t.foreground : t.muted)
             .when(Boolean(hint), el => el.tooltip(hint)).child(w.name))
           .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1())

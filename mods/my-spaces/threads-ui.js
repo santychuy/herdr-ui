@@ -7,7 +7,8 @@ const color = (row, t) => row.status === "blocked" ? t.blocked : row.status === 
 
 export class ThreadList {
   constructor() {
-    this.expanded = new Set(JSON.parse(localStorage.getItem("threads.expanded") ?? "[]"));
+    this.folded = new Set(JSON.parse(localStorage.getItem("threads.folded") ?? "[]"));
+    localStorage.removeItem("threads.expanded");
     this.details = new Set();
   }
 
@@ -75,17 +76,21 @@ export class ThreadList {
       .child(content);
   }
 
+  toggleShelf(key) {
+    this.folded.has(key) ? this.folded.delete(key) : this.folded.add(key);
+    localStorage.setItem("threads.folded", JSON.stringify([...this.folded]));
+  }
+
   shelf(key, label, rows, t) {
     if (!rows.length) return div().h(0);
-    const open = this.expanded.has(key);
+    const open = !this.folded.has(key);
     const visible = open ? rows : rows.filter(row => row.current);
     const selectedIndex = visible.findIndex(row => row.current);
     return v_flex().flex_none()
       .child(h_flex().id(`threads-shelf-${key}`).h(25).px(6).gap(5).items_center().text_size(10.5).text_color(t.dim)
         .role("button").accessibility_label(`${open ? "Hide" : "Show"} ${label} threads, ${rows.length}`)
         .on_click((_e, cx) => {
-          open ? this.expanded.delete(key) : this.expanded.add(key);
-          localStorage.setItem("threads.expanded", JSON.stringify([...this.expanded])); cx.notify();
+          this.toggleShelf(key); cx.notify();
         })
         .child(svg(`mods/workspace-chrome/chevron-${open ? "down" : "right"}.svg`).size(10))
         .child(div().flex_1().child(label)).child(String(rows.length)))
