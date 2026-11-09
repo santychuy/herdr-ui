@@ -1,0 +1,194 @@
+{
+  "id": "root",
+  "cloned_from": {
+    "name": "main",
+    "version": "0.1.8"
+  },
+  "type": "row",
+  "children": [
+    {
+      "id": "sidebar",
+      "type": "column",
+      "children": [
+        {
+          "id": "brand",
+          "type": "block",
+          "content": {
+            "mod": "my-workspace-chrome"
+          },
+          "size": {
+            "px": 46
+          },
+          "window_drag": true
+        },
+        {
+          "id": "sidebar-lists",
+          "type": "column",
+          "resizable": true,
+          "children": [
+            {
+              "id": "spaces",
+              "type": "block",
+              "content": {
+                "mod": "my-spaces"
+              },
+              "size": {
+                "weight": 1
+              },
+              "min": 150
+            },
+            {
+              "id": "accounts",
+              "type": "block",
+              "content": { "mod": "account-usage" },
+              "size": { "px": 180 },
+              "min": 80
+            }
+          ]
+        }
+      ],
+      "size": {
+        "px": 206
+      },
+      "min": 206,
+      "max": 480,
+      "background": "chrome",
+      "resizable": false
+    },
+    {
+      "id": "work",
+      "type": "column",
+      "children": [
+        {
+          "id": "tabs",
+          "type": "block",
+          "content": {
+            "mod": "my-tabs"
+          },
+          "size": {
+            "px": 42
+          },
+          "window_drag": true
+        },
+        {
+          "id": "work-body",
+          "type": "row",
+          "children": [
+            {
+              "id": "main",
+              "type": "block",
+              "content": {
+                "tab": "active",
+                "pane": {
+                  "header": {
+                    "content": {
+                      "mod": "my-pane"
+                    },
+                    "reveal": "always",
+                    "height": 30,
+                    "position": "top"
+                  },
+                  "background": "background",
+                  "border": {
+                    "width": 1,
+                    "color": "border"
+                  },
+                  "focus": {
+                    "width": 1,
+                    "color": "#1158c7"
+                  },
+                  "radius": 10,
+                  "gap": 8,
+                  "lone": true
+                }
+              }
+            },
+            {
+              "id": "panel",
+              "type": "column",
+              "children": [
+                {
+                  "id": "panel-body",
+                  "type": "stack",
+                  "children": [
+                    {
+                      "id": "files",
+                      "type": "block",
+                      "content": {
+                        "mod": "files"
+                      }
+                    },
+                    {
+                      "id": "changes",
+                      "type": "block",
+                      "content": {
+                        "mod": "changes"
+                      }
+                    },
+                    {
+                      "id": "github-prs",
+                      "type": "block",
+                      "content": {
+                        "mod": "github-prs"
+                      }
+                    },
+                    {
+                      "id": "linear-issues",
+                      "type": "block",
+                      "content": {
+                        "mod": "linear-issues"
+                      }
+                    },
+                    {
+                      "id": "diagrams",
+                      "type": "block",
+                      "content": {
+                        "mod": "diagrams"
+                      }
+                    }
+                  ],
+                  "active": "files"
+                }
+              ],
+              "size": {
+                "px": 368
+              },
+              "min": 280,
+              "max": 900,
+              "hidden": true
+            }
+          ],
+          "padding": [2, 8],
+          "gap": 8
+        },
+        {
+          "id": "work-bottom-inset",
+          "type": "column",
+          "children": [],
+          "size": { "px": 6 },
+          "resizable": false
+        }
+      ],
+      "resizable": false
+    }
+  ],
+  "theme": {
+    "light": "paper",
+    "dark": "github-dark"
+  },
+  "background": "canvas",
+  "terminal_opacity": 0,
+  "terminal_padding": [
+    10,
+    4
+  ],
+  "divider": {
+    "width": 1,
+    "color": "border"
+  },
+  "titlebar": "none",
+  "traffic_lights": [
+    12,
+    16
+  ]
+}

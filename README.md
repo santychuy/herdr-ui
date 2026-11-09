@@ -28,9 +28,11 @@ The `my-main` layout uses Herdr's built-in `paper` theme in light mode and the c
 
 In `my-main`, the bottom toolbar and separate Agents inventory are removed. Project/thread navigation fills the sidebar above Accounts. Accounts retains its title-case, 11.5-pixel medium-weight dim heading and 1-pixel theme-border top divider. Drag that divider to resize Accounts independently against the navigation area; its requested height is 180 pixels with an 80-pixel minimum. The Add machine footer button is removed.
 
-The sidebar header places **Local / Remote → Search → Settings → Sidebar toggle** in one vertically centered row. The scope switch fills the available left-hand space, with an 8-pixel gap before the icon group at normal widths; the three icons retain equal 26-pixel button boxes and 4-pixel gaps. Tighter widths use compact icon controls, and Local/Remote falls back to monitor/server icons with tooltips when the labels do not fit. macOS window-button space is reserved with zoom accounted for. Settings retains its tooltip, accessible label, and update-available indicator.
+The sidebar header places **Local / Remote → Settings** in one vertically centered row. The scope switch fills the available left-hand space; the settings button retains its 26-pixel box, shortcut-only tooltip, accessible label, and update-available indicator. Local/Remote always keeps its text labels. macOS window-button space is reserved with zoom accounted for.
 
 The main workspace's top navigation (`my-tabs`) has no bottom border and uses the same theme `canvas` background as the workspace body. Inactive tabs and panel buttons also use `canvas` to avoid contrasting patches; selected and hover states remain visible.
+
+The sidebar baseline and minimum width are **206 logical pixels**, measured from the current expanded setup; it can be dragged wider up to 480 pixels. Collapse hides the entire sidebar, including Projects and Accounts—there is no narrow rail, compact project list, or in-sidebar expand control. The **Show/Hide sidebar** button is the leftmost control in the workspace's top navigation and remains reachable when hidden. It and **Cmd+B** both use native `layout.toggle:sidebar`, preserving the last expanded width and layout visibility state without separate collapsed/remembered-width flags. When hidden, the workspace top bar reserves macOS window-button space.
 
 The main content starts 2 logical pixels below the top navigation, retaining 8-pixel side and bottom insets. `work-body.padding: [2, 8]` supplies vertical/horizontal padding; the fixed 6-pixel `work-bottom-inset` spacer preserves the original bottom inset because layout padding pairs top and bottom.
 
@@ -46,32 +48,62 @@ Provider logos use [LobeHub Icons](https://github.com/lobehub/lobe-icons), the l
 
 The removed workspace-status toolbar no longer shows machine, branch, agent counts, or resize-mode messages. Its toolbar-dependent `cmd-r` resize shortcut is removed.
 
-Terminal panes in `my-main` use a 1-pixel black (`#000000`) focus border; unfocused panes retain the neutral theme border.
+Terminal panes in `my-main` retain a 1-pixel theme-border when unfocused; the focused pane gets a 1-pixel `#1158c7` darker GitHub blue border.
 
 The layout uses the custom `my-pane` header (cloned from `pane`) with 10-pixel top-corner rounding to match the pane radius and prevent its background from protruding into the rounded outline.
 
-`terminal_opacity: 0` lets the rounded pane frame supply the terminal's default background instead of painting a square terminal background over its bottom corners. The pane background and black focus border remain.
+`terminal_opacity: 0` lets the rounded pane frame supply the terminal's default background instead of painting a square terminal background over its bottom corners. Pane borders distinguish the active pane from its subdued siblings.
 
-The custom `my-spaces` sidebar presents Spaces as **Projects**, retaining project menus, worktree grouping, Git details, machine connection controls, and drag ordering. Its Local / Remote switch lives only in the top header and shares its persisted scope with project navigation. Filtering does not change the focused space; choosing a scope returns from Attention to Projects. Only the selected project expands its live threads. Local lists only this computer's spaces; its + button explicitly creates a local space. Remote groups projects under their machines. Selecting a project through navigation updates the header's local/remote selection and unfolds its machine.
+The custom `my-spaces` sidebar presents Spaces as **Projects**, retaining project menus, worktree grouping, Git details, machine connection controls, and drag ordering. Its Local / Remote switch lives only in the top header and shares its persisted scope with project navigation. Switching scope does not change the focused space. Only the selected project expands its live threads. Local lists only this computer's spaces; its + button explicitly creates a local space. Remote groups projects under their machines. Selecting a project through navigation updates the header's local/remote selection and unfolds its machine.
 
-The sidebar header omits both the Herdr logo and label, retaining the scope switch, search, settings, and sidebar controls.
+The sidebar header omits the Herdr logo/label, search button, and collapse button. Search shortcut popup, hover timers, custom search icon, and compact-sidebar variants are removed; only the scope switch and settings remain. The collapse button lives in `my-tabs` with its own sidebar icon.
 
-## Live threads and attention
+## Shortcut-only hover hints
+
+The current custom workspace chrome, sidebar/thread controls, pane headers, Accounts, and Cmd+K use **shortcut-only** pointer hints. Existing keybindings are resolved from the active layout over the global map; no bindings are added. Descriptions, names, status/offline reasons, and account warning/reset details stay in `accessibility_label`, which is independent of the visual tooltip.
+
+Current `my-main` mapping on macOS:
+
+| Control | Hover hint |
+|---|---|
+| Show/hide sidebar | ⌘B |
+| Settings | ⌘, |
+| New local space, when the active space is local | ⌘⇧S |
+| Project titles in native positions 1–9 | ⌃1 … ⌃9 |
+| Tab titles in selectable positions 1–9 | ⌘1 … ⌘9 |
+| Close active tab | ⌘⇧W |
+| Split focused pane right | ⌘/ |
+| Split focused pane down | ⌘. |
+| Zoom/unzoom focused pane | ⌘⇧Enter |
+| Close focused pane | ⌘W |
+| Cmd+K view group | Tab |
+| Cmd+K filter group | ⇧Tab |
+| Cmd+K command rows | That command's effective binding, if any |
+
+Tab numbering follows native keyboard selection, which skips settled tabs; a visible settled tab does not advertise an incorrect numbered shortcut. Project/tab hints sit on their titles, not their containers, so nested new-thread/close controls do not inherit the parent's shortcut. Pane hints appear only for the focused pane because their keyboard commands target focus. The local-space + is unhinted when a remote space is active because the keyboard command would target that remote machine.
+
+**No hover hint:** Local/Remote scope, Files/Changes/My PRs/Issues/Diagrams buttons, the new-tab chooser, dynamic thread/new-thread/pin/review/subagent controls, machine actions, palette sorting, account providers/quotas/warnings, and other controls without matching bindings. The new-tab + opens the agent chooser and therefore does not falsely advertise the direct `tab.new` shortcut. Native OS tooltips and contents of hidden shipped panels are outside this custom-surface pass.
+
+`mods/my-palette/bindings.js` is the canonical pure resolver/formatter. Herdr sandboxes module imports, so `my-tabs`, `my-workspace-chrome`, `my-spaces`, and `my-pane` carry identical local copies; keep them synchronized when changing shortcut resolution.
+
+
+## Live sidebar threads
 
 The sidebar uses native Herdr tabs as live thread workspaces, not persistent conversation IDs. Named tabs supply their thread titles; otherwise a meaningful agent title or program is used. Shell and mod tabs remain accessible. The selected project alone expands its threads, directly beneath the project without a separate Threads heading. A **+** at the project cell's right edge selects that project and opens the existing new-terminal/agent menu on its machine. Theme-colored tree connectors link the project to its thread rows: intermediate rows share a continuous vertical trunk, and the final row ends in a rounded elbow. Working/Reviewed groups retain folding and show their visible threads as nested branches. Clicking a thread focuses its existing agent (the most urgent agent tree when a tab contains several), or selects its tab for non-agent work. Right-click retains the native tab menu, including rename and close.
 
-Project and thread rows have no selection or hover background fill; active work is distinguished by text emphasis and status indicators. Colored project avatars remain. Rows use 6-pixel left and 5-pixel right padding; standard project and thread rows are 28 pixels tall, with thread vertical padding reduced to 2 pixels. Tree indentation and elbow positions match the tighter spacing. The header sidebar toggle, Projects +, attention count, project-cell +, and thread statuses share a trailing-column center 23 logical pixels inside the sidebar's right edge. Counts use centered 26-pixel slots and thread status glyphs use centered 20-pixel slots, so digit widths and dot/spinner changes do not move the column.
+Project and thread rows have no selection or hover background fill; active work is distinguished by text emphasis and status indicators. Colored project avatars remain. Rows use 6-pixel left and 5-pixel right padding; standard project and thread rows are 28 pixels tall, with thread vertical padding reduced to 2 pixels. Tree indentation and elbow positions match the tighter spacing. Projects +, project-cell +, and thread statuses share a trailing-column center 23 logical pixels inside the sidebar's right edge. Thread status glyphs use centered 20-pixel slots, so dot/spinner changes do not move the column.
 
-**Needs attention** shows a global count of threads with blockers/errors or unread completed replies, across local and remote projects. Clicking it replaces the project navigation with an attention view: blockers first, unread replies next, with stable tab order for equal priority. The current thread stays visible separately when it needs no attention. **‹ Projects** returns to navigation. Nothing changes focus merely because status updates arrive.
+Tree branches follow the selected thread: the entire path from the project down the shared trunk to the selected row's elbow uses the same theme `foreground` color as its title at full opacity. Earlier rows' side branches and all trunk segments below the selection remain subdued, using the theme `border` color at 45% opacity. The highlighted path updates from native tab selection without polling.
 
-Working threads are folded into a **Working** group unless current or pinned. Hover a thread to pin/unpin it with native `terminal.pin`, or mark finished work **Reviewed** with native `tab.settle`; busy or blocked trees cannot be marked reviewed. Reviewed work goes into a folded group, keeps running, and leaves the normal tab bar unless current or active again. Clicking it shows it again; the bring-back control uses `tab.unsettle`. Reviewing never closes a pane, kills a terminal, or deletes a conversation. Pins lead project thread rows but never outrank blockers in the global attention view.
+The sidebar has no **Needs attention** button or separate attention inbox. That view, its global count, view-state handling, and `my-spaces.attention` / `my-spaces.projects` commands are removed. Use **Cmd+K → Needs attention** for global blockers/errors and unread replies. Project/thread status indicators and per-project attention counts remain; updates never change focus.
+
+Working threads are folded into a **Working** group unless current or pinned. Hover a thread to pin/unpin it with native `terminal.pin`, or mark finished work **Reviewed** with native `tab.settle`; busy or blocked trees cannot be marked reviewed. Reviewed work goes into a folded group, keeps running, and leaves the normal tab bar unless current or active again. Clicking it shows it again; the bring-back control uses `tab.unsettle`. Reviewing never closes a pane, kills a terminal, or deletes a conversation. Pins lead project thread rows.
 
 Subagent problems roll up to their parent thread, including errors from child terminals without panes. A parent's unread reply remains visible even while children continue working; child completion alone is not a separate unread reply. The subagent count expands live children for inspection with `terminal.peek`. Machine-qualified IDs keep local and remote work separate; unavailable/loading machines show unavailable state instead of idle/completed work. Native agent navigation follows the sidebar's thread order.
 
-Presentation state remembers the attention/projects view and folded Working/Reviewed groups. No agent-status polling, external session database, or Atuin installation is added. Historical search, resume, and fork are intentionally not part of this live-thread design. Existing top-bar tabs remain the workspace controls.
+Presentation state remembers folded Working/Reviewed groups. No agent-status polling, external session database, or Atuin installation is added. Historical search, resume, and fork are intentionally not part of this live-thread design. Existing top-bar tabs remain the workspace controls.
 
-Commands available through `herdr-app do`: `my-spaces.attention`, `my-spaces.projects`, `my-spaces.review` (current thread), `my-spaces.working`, and `my-spaces.reviewed` (toggle that group's visibility in the selected project). No additional keyboard shortcuts are claimed.
-
+Commands available through `herdr-app do`: `my-spaces.review` (current thread), `my-spaces.working`, and `my-spaces.reviewed` (toggle that group's visibility in the selected project). No additional keyboard shortcuts are claimed.
 
 ## Cmd+K switcher
 
