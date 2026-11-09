@@ -1,0 +1,10 @@
+{
+  "place": "none",
+  "title": "Project icon",
+  "focusable": true,
+  "overlay": {
+    "kind": "dialog",
+    "width": 480,
+    "height": 520
+  }
+}

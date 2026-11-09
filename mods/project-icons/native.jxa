@@ -1,0 +1,78 @@
+ObjC.import('AppKit');
+ObjC.import('Foundation');
+
+// Read-only access to the general pasteboard. No clipboard writes or shell commands.
+var MAX_BYTES = 8 * 1024 * 1024;
+var MAX_PIXELS = 16 * 1024 * 1024;
+
+function encoded(data, kind) {
+    if (!data || !data.length) throw new Error('The clipboard image is empty.');
+    if (Number(data.length) > MAX_BYTES) throw new Error('Images must be at most 8 MiB.');
+    return {ok: true, kind: kind, base64: ObjC.unwrap(data.base64EncodedStringWithOptions(0))};
+}
+
+function paste() {
+    var board = $.NSPasteboard.generalPasteboard;
+    var urls = board.readObjectsForClassesOptions(
+        $.NSArray.arrayWithObject($.NSURL),
+        $.NSDictionary.dictionaryWithObjectForKey(true, $.NSPasteboardURLReadingFileURLsOnlyKey)
+    );
+    if (urls && Number(urls.count) > 0) {
+        if (Number(urls.count) !== 1) throw new Error('Copy one PNG or SVG file at a time.');
+        return {ok: true, kind: 'file', path: ObjC.unwrap(urls.objectAtIndex(0).path)};
+    }
+    var svgTypes = ['public.svg-image', 'image/svg+xml'];
+    for (var i = 0; i < svgTypes.length; i++) {
+        var svg = board.dataForType(svgTypes[i]);
+        if (svg && Number(svg.length) > 0) return encoded(svg, 'svg');
+    }
+    var text = board.stringForType($.NSPasteboardTypeString);
+    if (text) {
+        if (Number(text.length) > 1024 * 1024) throw new Error('SVG text must be at most 1 MiB.');
+        var value = ObjC.unwrap(text);
+        if (/^\s*(?:<\?xml[\s\S]*?\?>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg(?:\s|>)/i.test(value)) {
+            return {ok: true, kind: 'svg', text: value};
+        }
+    }
+    var png = board.dataForType($.NSPasteboardTypePNG);
+    if (png && Number(png.length) > 0) return encoded(png, 'png');
+    var tiff = board.dataForType($.NSPasteboardTypeTIFF);
+    if (tiff && Number(tiff.length) > 0) {
+        if (Number(tiff.length) > MAX_BYTES) throw new Error('The clipboard image exceeds 8 MiB.');
+        var bitmap = $.NSBitmapImageRep.imageRepWithData(tiff);
+        if (!bitmap) throw new Error('The clipboard image could not be decoded.');
+        if (Number(bitmap.pixelsWide) * Number(bitmap.pixelsHigh) > MAX_PIXELS) {
+            throw new Error('Images must contain at most 16 megapixels.');
+        }
+        return encoded(bitmap.representationUsingTypeProperties($.NSBitmapImageFileTypePNG, $.NSDictionary.dictionary), 'png');
+    }
+    throw new Error('Copy a PNG image, SVG markup, or one PNG/SVG file first.');
+}
+
+function pick() {
+    var app = $.NSApplication.sharedApplication;
+    app.setActivationPolicy($.NSApplicationActivationPolicyAccessory);
+    app.activateIgnoringOtherApps(true);
+    var panel = $.NSOpenPanel.openPanel;
+    panel.title = 'Choose a project icon';
+    panel.message = 'Choose a PNG or SVG image (up to 8 MiB).';
+    panel.allowedFileTypes = ['png', 'svg'];
+    panel.allowsMultipleSelection = false;
+    panel.canChooseDirectories = false;
+    panel.canChooseFiles = true;
+    if (Number(panel.runModal) !== Number($.NSModalResponseOK)) {
+        return {ok: false, cancelled: true, error: 'No image selected.'};
+    }
+    return {ok: true, kind: 'file', path: ObjC.unwrap(panel.URL.path)};
+}
+
+function run(argv) {
+    try {
+        if (argv.length !== 1 || (argv[0] !== 'paste' && argv[0] !== 'pick')) {
+            throw new Error('Expected paste or pick.');
+        }
+        return JSON.stringify(argv[0] === 'paste' ? paste() : pick());
+    } catch (error) {
+        return JSON.stringify({ok: false, error: String(error.message || error)});
+    }
+}

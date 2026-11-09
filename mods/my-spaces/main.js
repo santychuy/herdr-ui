@@ -1,12 +1,14 @@
 // Project navigation with live threads.
 // Retains local/remote machine groups, project menus, worktrees, and drag ordering.
 
-import { View, div, svg } from "gpui-kit";
+import { View, div, svg, image } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { spaces, machines, panes, agents, terminals, setAgentOrder, nextCommand, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, keys } from "herdr";
 import { buildThreads } from "./threads.js";
 import { ThreadList } from "./threads-ui.js";
 import { shortcutHint } from "./bindings.js";
+
+const ICON_TINTS = { red: "ansi1", amber: "ansi3", green: "ansi2", teal: "ansi6", blue: "ansi4", purple: "ansi5" };
 
 // Where a space is now: its first terminal's live folder, else where it was made.
 // `ps`: panes(), read once by the caller (each read copies every pane).
@@ -21,10 +23,6 @@ const base = (path) => path.replace(/\/+$/, "").split("/").pop();
 // for this often, in repos the list shows, while the window is in front.
 const FALLBACK = 60000;
 
-// What a stored color name looks like on an avatar (the same in every mod
-// that draws space avatars): one strong color per hue, light and dark alike.
-const MARK = { ansi6: "#22a99a", ansi3: "#e3814f", ansi4: "#5b8def", ansi5: "#8b7cf6", ansi2: "#3fae6a", ansi1: "#d9649a" };
-
 export default class Spaces extends View {
   init(_props, cx) {
     this.threadUI = new ThreadList();
@@ -34,7 +32,13 @@ export default class Spaces extends View {
     cx.spawn(async cx => {
       for (;;) {
         const command = await nextCommand();
-        if (command === "review") {
+        if (command === "icons") {
+          const space = spaces().find(s => s.active);
+          if (space) openOverlay({ mod: "project-icons", kind: "dialog", width: 480, height: 520, props: { space: space.id } });
+        } else if (command === "project-menu") {
+          const space = spaces().find(s => s.active);
+          if (space) this.menu(space);
+        } else if (command === "review") {
           const current = this.threads.find(row => row.current);
           if (current) this.threadUI.review(current);
         } else if (command === "working" || command === "reviewed") {
@@ -254,7 +258,7 @@ export default class Spaces extends View {
 
   menu(w) {
     // A popup is as tall as its items; height is only the most.
-    openOverlay({ mod: "menu", kind: "popup", width: 200, height: 260, props: { tab: "space", target: { id: w.id } } });
+    openOverlay({ mod: "project-menu", kind: "popup", width: 230, height: 300, props: { tab: "space", target: { id: w.id } } });
   }
 
   // Spaces in order, each worktree space moved under its main checkout's.
@@ -360,9 +364,14 @@ export default class Spaces extends View {
       .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`\u2193${g.behind}`)));
   }
 
-  projectIcon(space, fill, tree, t) {
+  projectIcon(space, t) {
     const folded = this.foldedProjects.has(space.id);
     const reveal = this.hoveredProject === space.id;
+    const icon = (shared("space.icons") ?? {})[space.id];
+    const glyph = icon?.kind === "custom"
+      ? image(icon.path).size(18)
+      : svg(`mods/project-icons/icons/${icon?.name ?? "folder-01"}.svg`).size(16)
+        .text_color(t[ICON_TINTS[icon?.color]] ?? t.muted);
     return div().id(`project-fold-${space.id}`).relative().size(18).flex_none().rounded(5)
       .cursor_pointer().role("button").accessibility_label(`${folded ? "Expand" : "Collapse"} threads in ${space.name}`)
       .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
@@ -374,10 +383,9 @@ export default class Spaces extends View {
         cx.notify();
       })
       .child(h_flex().id(`project-avatar-${space.id}`).absolute().size_full().rounded(5)
-        .items_center().justify_center().text_size(10.5).font_bold().text_color(tree ? t.dim : "#ffffff")
-        .when(!tree, el => el.bg(fill))
+        .items_center().justify_center().text_color(t.muted)
         .opacity(reveal ? 0 : 1).transition("opacity", { duration: 140, easing: "ease-in-out" })
-        .child(tree ? svg("mods/workspace-chrome/branch.svg").size(13) : [...space.name][0]?.toUpperCase() ?? "?"))
+        .child(glyph))
       .child(h_flex().id(`project-chevron-${space.id}`).absolute().size_full().items_center().justify_center()
         .text_color(t.muted).hover(style => style.text_color(t.foreground))
         .opacity(reveal ? 1 : 0).transition("opacity", { duration: 140, easing: "ease-in-out" })
@@ -386,9 +394,6 @@ export default class Spaces extends View {
 
   row({ w, i, g, tree }, t) {
     const on = w.active;
-    const colors = shared("space.colors") ?? {};
-    const color = colors[w.id] ?? "ansi6";
-    const fill = color.startsWith("#") ? color : (MARK[color] ?? t[color]);
     const attentionCount = this.threads.filter(row => row.space.id === w.id && row.needsAttention).length;
     const hint = Number.isInteger(w.index) && w.index >= 1 && w.index <= 9
       ? shortcutHint({ name: "space.select", args: { index: w.index } }, keys(), shared("layout"), window()?.platform) : null;
@@ -438,7 +443,7 @@ export default class Spaces extends View {
           .gap(7)
           .items_center()
           .when(Boolean(tree), el => el.pl(22))
-          .child(this.projectIcon(w, fill, tree, t))
+          .child(this.projectIcon(w, t))
           .child(div().flex_shrink(1).min_w(0).max_w(150).truncate().text_color(on ? t.foreground : t.muted)
             .when(Boolean(hint), el => el.tooltip(hint)).child(w.name))
           .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1())
@@ -457,7 +462,6 @@ export default class Spaces extends View {
 
   render() {
     const t = theme();
-    const palette = ["ansi6", "ansi3", "ansi4", "ansi5", "ansi2", "ansi1"];
     const sp = spaces();
     const active = sp.find(s => s.active);
     const newSpaceHint = active && !active.machine ? shortcutHint({ name: "space.new", args: {} }, keys(), shared("layout"), window()?.platform) : null;
@@ -475,16 +479,6 @@ export default class Spaces extends View {
       if (active?.machine && this.folded.delete(active.machine)) localStorage.setItem("machines.folded", JSON.stringify([...this.folded]));
       this.pressed = this.over = null;
     }
-    const ids = new Set(sp.map(p => p.id));
-    const kept = Object.fromEntries(Object.entries(shared("space.colors") ?? {}).filter(([id]) => ids.has(id)));
-    let changed = Object.keys(kept).length !== Object.keys(shared("space.colors") ?? {}).length;
-    for (const p of sp) {
-      if (kept[p.id] || p.name === "~") continue;
-      const uses = c => Object.values(kept).filter(v => v === c).length;
-      kept[p.id] = palette.reduce((best, c) => uses(c) < uses(best) ? c : best);
-      changed = true;
-    }
-    if (changed) setShared("space.colors", kept);
     return v_flex().size_full().min_h(0).bg(t.chrome).text_size(13)
       .child(h_flex().h(31).pl(16).pr(10).items_center().justify_between().text_size(11.5).text_color(t.dim)
         .child("Projects")

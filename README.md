@@ -91,9 +91,9 @@ Tab numbering follows native keyboard selection, which skips settled tabs; a vis
 
 The sidebar uses native Herdr tabs as live thread workspaces, not persistent conversation IDs. Named tabs supply their thread titles; otherwise a meaningful agent title or program is used. Shell and mod tabs remain accessible. Every expanded project shows its threads directly beneath it without a separate Threads heading; switching projects never hides another project's threads. A **+** at the project cell's right edge selects that project and opens the existing new-terminal/agent menu on its machine. Theme-colored tree connectors link the project to its thread rows: intermediate rows share a continuous vertical trunk, and the final row ends in a rounded elbow. Working/Reviewed groups retain folding and show their visible threads as nested branches. Clicking a thread focuses its existing agent (the most urgent agent tree when a tab contains several), or selects its tab for non-agent work. Right-click retains the native tab menu, including rename and close.
 
-Project and thread rows have no selection or hover background fill; active work is distinguished by text emphasis and status indicators. Colored project avatars remain. Rows use 6-pixel left and 5-pixel right padding; standard project and thread rows are 28 pixels tall, with thread vertical padding reduced to 2 pixels. Tree indentation and elbow positions match the tighter spacing. Projects +, project-cell +, and thread statuses share a trailing-column center 23 logical pixels inside the sidebar's right edge. Thread status glyphs use centered 20-pixel slots, so dot/spinner changes do not move the column.
+Project and thread rows have no selection or hover background fill; active work is distinguished by text emphasis and status indicators. Project icons are neutral Hugeicons glyphs or custom images, never randomly colored initials. Rows use 6-pixel left and 5-pixel right padding; standard project and thread rows are 28 pixels tall, with thread vertical padding reduced to 2 pixels. Tree indentation and elbow positions match the tighter spacing. Projects +, project-cell +, and thread statuses share a trailing-column center 23 logical pixels inside the sidebar's right edge. Thread status glyphs use centered 20-pixel slots, so dot/spinner changes do not move the column.
 
-Hovering a project crossfades its avatar (or worktree branch icon) into a chevron over 140 ms using native opacity transitions: downward when expanded, right-pointing when folded. Click that icon to fold or unfold all threads in that project. Leaving the project restores its icon whether expanded or folded. Each project's fold choice is independent and saved locally, including across reloads and project switching. Folding never selects a project, changes terminal focus, or starts a project drag; clicking the project title still navigates normally.
+Hovering a project crossfades its icon into a chevron over 140 ms using native opacity transitions: downward when expanded, right-pointing when folded. Click that icon to fold or unfold all threads in that project. Leaving the project restores its icon whether expanded or folded. Each project's fold choice is independent and saved locally, including across reloads and project switching. Folding never selects a project, changes terminal focus, or starts a project drag; clicking the project title still navigates normally.
 
 Tree branches follow the selected thread: the entire path from the project down the shared trunk to the selected row's elbow uses the same theme `foreground` color as its title at full opacity. Earlier rows' side branches and all trunk segments below the selection remain subdued, using the theme `border` color at 45% opacity. The highlighted path updates from native tab selection without polling.
 
@@ -105,7 +105,25 @@ Subagent problems roll up to their parent thread, including errors from child te
 
 Presentation state remembers independently folded projects and Working/Reviewed groups. The old opt-in expanded-group state is replaced by opt-out folded-group state so existing installations also get the new expanded default. No agent-status polling, external session database, or Atuin installation is added. Historical search, resume, and fork are intentionally not part of this live-thread design. Existing top-bar tabs remain the workspace controls.
 
-Commands available through `herdr-app do`: `my-spaces.review` (current thread), `my-spaces.working`, and `my-spaces.reviewed` (toggle that group's visibility in the selected project). No additional keyboard shortcuts are claimed.
+Commands available through `herdr-app do`: `my-spaces.review` (current thread), `my-spaces.working`, and `my-spaces.reviewed` (toggle that group's visibility in the selected project); `my-spaces.icons` opens the selected project's icon picker, and `my-spaces.project-menu` opens its context menu. No additional global keyboard shortcuts are claimed.
+
+## Project icons
+
+Every project/space, including worktrees, starts with a neutral folder icon. Right-click its row → **Customize icon…**:
+
+- **Gallery:** 60 searchable, bundled [Hugeicons](https://hugeicons.com/docs) Free Stroke Rounded icons. Click an icon or press Enter to select the first search result; the selected icon is marked and saves immediately.
+- **Color:** seven theme-aware swatches for gallery icons—neutral, red, amber, green, teal, blue, and purple. Selection updates the header, gallery, and sidebar immediately and persists per project, including when selecting another gallery icon. Uploaded images retain their original colors.
+- **Custom:** upload or drop one PNG/SVG, or paste with **Paste image**, **⌘V**, or **Ctrl+V** while Custom is selected. Paste accepts PNG images, SVG markup/image data, copied PNG/SVG files, and macOS TIFF clipboard images converted to PNG. Original colors are preserved.
+- **Reset to default** restores the neutral folder and clears the color choice. Cancelled or rejected imports retain the previous icon.
+
+Selection feedback uses the header's icon preview and the gallery's selected tile, without a current-icon name or saved/changed message. No status space is reserved when idle; only import progress and errors appear above the footer.
+
+The gallery uses `@hugeicons/core-free-icons@4.4.0` under the [MIT license](https://hugeicons.com/docs/faqs/license-questions), retained in `mods/project-icons/LICENSE.hugeicons`. Icons are bundled SVGs: no React, API key, Pro license, runtime download, or npm installation. The custom importer requires Node.js; clipboard/native file selection uses macOS AppKit through the system `osascript`.
+
+PNG files are limited to 8 MiB, 8192 pixels per side, and 16 megapixels; SVG files to 1 MiB, 8192-pixel explicit dimensions, 10,000 elements, and 64 nested levels. SVG must be static and self-contained: scripts, external resources, embedded images, and unsupported markup are rejected. Imported assets are copied to immutable, content-addressed files under `~/.config/herdr-app/data/project-icons/`; deleting or moving the original does not break the icon. Choices persist in shared `space.icons`, keyed by machine-qualified space IDs. Remote projects use this computer's gallery, clipboard, picker, and assets.
+
+`mods/project-menu` preserves the native Rename, worktree, and Close actions and adds the icon picker. Import/export scripts carry the custom mods, but deliberately exclude personal `shared.json` and `data/`: imported icons and per-project choices are local, not part of the shareable setup.
+
 
 ## Cmd+K switcher
 
