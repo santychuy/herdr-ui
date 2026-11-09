@@ -23,6 +23,9 @@ From this clone, run `./export.sh`, review `git diff`, commit, and push.
 
 Current personal files are `settings.json` (zoom 1.2, sounds on) and `keys.json` (stock macOS map: `cmd-t` new tab, `cmd-k` palette, `cmd-d` split right).
 
+The `my-main` layout uses Herdr's built-in `paper` theme in light mode and the custom `github-dark` theme in dark mode. The palette follows [TerminalColors GitHub Dark](https://terminalcolors.com/themes/github/dark/) and its [Alacritty export](https://terminalcolors.com/downloads/alacritty/github-dark.toml): terminal background, foreground, selection, cursor, and all 16 ANSI colors. Herdr derives panel colors from the theme. The normal black ANSI slot is a shadow color (2.48:1 contrast against the terminal background); the foreground is 17.38:1, and it is 7.19:1 on the selection background.
+
+
 In `my-main`, the bottom toolbar and separate Agents inventory are removed. Project/thread navigation fills the sidebar above Accounts. Accounts retains its title-case, 11.5-pixel medium-weight dim heading and 1-pixel theme-border top divider. Drag that divider to resize Accounts independently against the navigation area; its requested height is 180 pixels with an 80-pixel minimum. The Add machine footer button is removed.
 
 The sidebar header places **Local / Remote → Search → Settings → Sidebar toggle** in one vertically centered row. The scope switch fills the available left-hand space, with an 8-pixel gap before the icon group at normal widths; the three icons retain equal 26-pixel button boxes and 4-pixel gaps. Tighter widths use compact icon controls, and Local/Remote falls back to monitor/server icons with tooltips when the labels do not fit. macOS window-button space is reserved with zoom accounted for. Settings retains its tooltip, accessible label, and update-available indicator.
