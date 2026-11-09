@@ -1,0 +1,9 @@
+{
+  "programs": {
+    "omp": {
+      "name": "omp",
+      "icon": "mods/my-spaces/omp.svg",
+      "tint": false
+    }
+  }
+}
