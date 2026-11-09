@@ -31,7 +31,7 @@ function currentIcon(space) {
 
 function preview(icon, size, color) {
   return icon.kind === "custom"
-    ? image(icon.path).size(size).flex_none()
+    ? image(icon.path).size(size).flex_none().rounded(2)
     : svg(`mods/project-icons/icons/${icon.name}.svg`).size(size).flex_none().text_color(color);
 }
 

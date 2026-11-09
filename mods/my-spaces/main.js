@@ -369,7 +369,7 @@ export default class Spaces extends View {
     const reveal = this.hoveredProject === space.id;
     const icon = (shared("space.icons") ?? {})[space.id];
     const glyph = icon?.kind === "custom"
-      ? image(icon.path).size(18)
+      ? image(icon.path).size(18).rounded(2)
       : svg(`mods/project-icons/icons/${icon?.name ?? "folder-01"}.svg`).size(16)
         .text_color(t[ICON_TINTS[icon?.color]] ?? t.muted);
     return div().id(`project-fold-${space.id}`).relative().size(18).flex_none().rounded(5)
