@@ -21,7 +21,7 @@ The app applies settings and keys live.
 
 From this clone, run `./export.sh`, review `git diff`, commit, and push.
 
-Current personal files are `settings.json` (zoom 1.2, sounds on) and `keys.json` (stock macOS map: `cmd-t` new tab, `cmd-k` palette, `cmd-d` split right).
+Current personal files include `settings.json`, `keys.json`, and custom mods under `mods/`. Cmd+K opens the custom agent-first `my-palette`. The old Cmd+P picker binding is removed; other keybindings retain their configured layout overrides.
 
 The `my-main` layout uses Herdr's built-in `paper` theme in light mode and the custom `github-dark` theme in dark mode. The palette follows [TerminalColors GitHub Dark](https://terminalcolors.com/themes/github/dark/) and its [Alacritty export](https://terminalcolors.com/downloads/alacritty/github-dark.toml): terminal background, foreground, selection, cursor, and all 16 ANSI colors. Herdr derives panel colors from the theme. The normal black ANSI slot is a shadow color (2.48:1 contrast against the terminal background); the foreground is 17.38:1, and it is 7.19:1 on the selection background.
 
@@ -71,6 +71,32 @@ Subagent problems roll up to their parent thread, including errors from child te
 Presentation state remembers the attention/projects view and folded Working/Reviewed groups. No agent-status polling, external session database, or Atuin installation is added. Historical search, resume, and fork are intentionally not part of this live-thread design. Existing top-bar tabs remain the workspace controls.
 
 Commands available through `herdr-app do`: `my-spaces.attention`, `my-spaces.projects`, `my-spaces.review` (current thread), `my-spaces.working`, and `my-spaces.reviewed` (toggle that group's visibility in the selected project). No additional keyboard shortcuts are claimed.
+
+
+## Cmd+K switcher
+
+Cmd+K opens `my-palette` with **Agents** selected on each opening. Four views share one search field:
+
+- **Agents — default:** live primary agents, split-pane agents, and reporting/recognized subagents only. Plain shells, non-agent child programs, and mod-only tabs never fill the agent list. Working, blocked, unread, and idle agents remain visible under **All**; choose **Working** to narrow to that status.
+- **Terminals:** individual terminals across local and remote projects, including shells, agent-hosting terminals, and background descendants. Split panes have separate rows; promoted child terminals are not duplicated. Each row shows project, machine, tab, terminal address, and live folder when available. Mod-only tabs remain accessible here as explicitly labeled **Mod tab** entries.
+- **Projects:** spaces across local and remote machines, with thread counts, folders, and rolled-up status.
+- **Commands & keys:** the existing searchable command catalog, recent commands, and effective shortcut labels for the current layout.
+
+Agent rows show their harness's Herdr program icon in a fixed left-hand column, including split-pane agents and subagents. Terminal rows use their own program icons. Monochrome glyphs follow the theme; full-color logos keep their original colors. Rows without an icon retain alignment without an invented logo.
+
+Search matches native tab names/numbers, agent titles, terminal addresses, project/machine context, program names, and folders. For example, `OpenKlub Tab 1` in **Terminals** lists that tab's individual terminals. Agents, terminals, and projects support **All**, **Needs attention**, **Working**, **Idle**, and **Reviewed** filters. Switching views resets the status filter to **All** while retaining the search query. Click the sort control to cycle **Attention first**, **Recent activity**, **Project**, and **Name A–Z**; the sort choice persists. Search preserves the chosen ordering.
+
+Attention puts blockers/errors before unread replies, then working and idle threads. It uses the sidebar's existing thread aggregation: child problems roll up to the parent, child completion is not an unread parent reply, and unavailable machines are not presented as completed or idle. Unavailable entries cannot be opened. Activity sorting uses reported state-change timestamps, not fabricated visit or session ages.
+
+↑/↓ and Page Up/Down move selection; Enter opens it. **Tab** cycles forward through Agents → Terminals → Projects → Commands & keys → Agents. **Shift+Tab** cycles the current view's filters forward through All → Needs attention → Working → Idle → Reviewed → All, without changing views or the search query. Shift+Tab does nothing in Commands & keys, which has no filters. View/filter changes reset row selection and scroll while keeping the search input focused; Escape closes. Choosing an agent uses `agent.focus`; terminal rows with panes use `pane.focus` with the exact pane ID, background terminals use `agent.focus` or `terminal.peek`, and mod-only tabs use `tab.select`. Filtering and sorting never change terminal focus. Exited terminals are excluded; if no agents are live, the default view stays empty instead of falling back to shells. This is live navigation, not historical conversation search/resume.
+
+Tab navigation uses native GPUI actions, not a bubbling raw-key handler. `cx.bind_keys` scopes Tab/Shift+Tab to `HerdrPalette` and `HerdrPalette > Input`; the latter matches at the native search input's depth so its built-in Tab editing actions cannot take precedence. Palette action handlers consume propagation and restore input focus. Registration is once per app session; no global Tab override or desktop key injection is used. See [GPUI keybinding precedence](https://gpui-kit.com/docs/keybinding).
+
+This replaces the custom setup's old sidebar search/picker access. The sidebar button, Cmd+P binding, and palette command that opened the picker are removed. The old picker's inline new-tab/new-space and tab-close actions are not copied into search results; creation/management commands remain in **Commands & keys**. Herdr's shipped `picker` mod is left untouched because stock layouts still use it; the custom header and palette no longer open it.
+
+The live files are `~/.config/herdr-app/mods/my-palette/`; this repository carries the portable copy without generated type files. Herdr restricts module imports to the current mod, so its `threads.js` is an unchanged local copy of `my-spaces/threads.js`; keep those copies aligned when changing thread semantics.
+
+For command-driven inspection, open with `herdr-app do mod.open --name my-palette`, then send `my-palette.agents`, `my-palette.terminals`, `my-palette.projects`, or `my-palette.commands`. The former combined `my-palette.threads` view command is removed. `my-palette.next-view` and `my-palette.next-filter` dispatch the same native actions as Tab and Shift+Tab down the current window's real focus path. Other controls are `my-palette.filter-<all|attention|working|idle|reviewed>`, `my-palette.sort-<attention|activity|project|name>`, `my-palette.search:<query>`, and `my-palette.open-selected`. Commands target shown copies only. Validate with `herdr-app check ~/.config/herdr-app/mods/my-palette`, `status`, and a screenshot inspected after the next rendered frame.
 
 
 ## Linear Issues panel
