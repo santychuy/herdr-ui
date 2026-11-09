@@ -13,15 +13,15 @@ const bound = [
   { section: "global", keys: "cmd-q", action: "app.quit" },
   { section: "global", keys: "cmd-]", action: "agent.next" },
   { section: "global", keys: "cmd-alt-h", action: "app.hide_others" },
-  { section: "layout:my-main", keys: "cmd-n", action: "tab.new" },
-  { section: "layout:my-main", keys: "cmd-shift-s", action: "space.new" },
-  { section: "layout:my-main", keys: "cmd-w", action: "pane.close" },
-  { section: "layout:my-main", keys: "cmd-shift-w", action: "tab.close" },
-  { section: "layout:my-main", keys: "cmd-/", action: "pane.split:right" },
-  { section: "layout:my-main", keys: "cmd-]", action: "tab.next" },
-  { section: "layout:my-main", keys: "cmd-alt-h", action: "pane.go:left" },
+  { section: "layout:santychuy", keys: "cmd-n", action: "tab.new" },
+  { section: "layout:santychuy", keys: "cmd-shift-s", action: "space.new" },
+  { section: "layout:santychuy", keys: "cmd-w", action: "pane.close" },
+  { section: "layout:santychuy", keys: "cmd-shift-w", action: "tab.close" },
+  { section: "layout:santychuy", keys: "cmd-/", action: "pane.split:right" },
+  { section: "layout:santychuy", keys: "cmd-]", action: "tab.next" },
+  { section: "layout:santychuy", keys: "cmd-alt-h", action: "pane.go:left" },
 ];
-const key = (name, args = {}, layout = "my-main") => commandKey({ name, args }, bound, layout);
+const key = (name, args = {}, layout = "santychuy") => commandKey({ name, args }, bound, layout);
 
 test("prefers the active layout's shortcuts over valid global aliases", () => {
   assert.equal(key("tab.new"), "cmd-n");

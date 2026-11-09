@@ -57,6 +57,28 @@
     "ctrl-8": "space.select:8",
     "ctrl-9": "space.select:9"
   },
+  "layout:santychuy": {
+    "cmd-k": "mod.open:my-palette",
+    "cmd-n": "tab.new",
+    "cmd-shift-t": "tab.rename",
+    "cmd-shift-w": "tab.close",
+    "cmd-[": "tab.prev",
+    "cmd-]": "tab.next",
+    "cmd-shift-s": "space.new",
+    "cmd-shift-[": "space.prev",
+    "cmd-shift-]": "space.next",
+    "cmd-alt-w": "space.close",
+    "cmd-.": "pane.split:down",
+    "cmd-/": "pane.split:right",
+    "cmd-w": "pane.close",
+    "cmd-alt-h": "pane.go:left",
+    "cmd-alt-j": "pane.go:down",
+    "cmd-alt-k": "pane.go:up",
+    "cmd-alt-l": "pane.go:right",
+    "cmd-alt-[": "agent.prev",
+    "cmd-alt-]": "agent.next",
+    "cmd-shift-k": "mod.open:my-palette"
+  },
   "terminal": {
     "cmd-c": "terminal.copy",
     "cmd-v": "terminal.paste",
