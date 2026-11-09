@@ -74,6 +74,8 @@ Commands available through `herdr-app do`: `my-spaces.attention`, `my-spaces.pro
 
 `my-main` adds **Issues** beside Files, Changes, and My PRs. It uses the same right-side panel and per-space panel selection. The Linear connection belongs to the local desktop user; switching to a remote terminal does not copy credentials to that machine.
 
+The Issues toolbar button and panel header use the [Linear logo from Simple Icons](https://github.com/simple-icons/simple-icons/blob/develop/icons/linear.svg), bundled locally as `mods/linear-issues/issues.svg` and tinted by the current theme. No runtime download is required. Brand usage remains subject to [Simple Icons’ disclaimer and the brand’s guidelines](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md).
+
 ### Authentication choice
 
 | Method | Onboarding | Requirements |
@@ -89,7 +91,7 @@ Linear recommends OAuth for public integrations and API keys for personal script
 2. Follow the link to [Linear → Settings → Account → Security & Access](https://linear.app/settings/account/security).
 3. Create a key named **Herdr**, grant **Read** only, and choose all intended teams or restrict it to specific teams. Write/Admin permissions are not needed. If key creation is unavailable, a workspace administrator must permit member API keys.
 4. Paste the key into the masked field and connect. Do not paste it into agent chat or a terminal command.
-5. The panel verifies the account, displays the workspace/user, and lists accessible open issues.
+5. The panel verifies the account and lists accessible issues grouped by status. The header’s Settings gear shows the connected workspace/user and read-only access.
 
 The helper requires Python 3. Persistent credentials use macOS Keychain or Linux Secret Service (`secret-tool`); there is no plaintext persistent fallback. A brief handoff file inside a private, owner-only directory under `data/linear-issues/credentials` transfers the key from the native input to the helper and is deleted after connection. Keys are not put in command arguments, shared mod state, layouts, or exported settings. Do not copy the app's `data/` directory between installations.
 
@@ -97,10 +99,15 @@ If the app crashes during that handoff, an abandoned file can remain in the priv
 
 ### Browsing and account scope
 
-- **All** shows every open issue the key can read in its Linear workspace, including unassigned issues. It is not limited to the current Git repository or active terminal.
+- The main view starts with assignee/team filters and the status groups, without a redundant scope summary or account card. Header controls are icon-only Refresh, Settings, and Close, with tooltips and accessible labels.
+- **Settings** opens a native popover containing account details, **Connection** (replace the key), and **Disconnect**. Escape or an outside click dismisses it. Disconnect requires a separate **Remove saved key** confirmation; canceling or dismissing the menu disarms it.
+- **All** shows every non-archived issue the key can read in its Linear workspace, including unassigned issues. It is not limited to the current Git repository or active terminal.
 - **Assigned to me** narrows by the authenticated user's ID. The team selector further narrows either view.
-- Open means **non-archived**, excluding workflow categories **completed** and **canceled**. Backlog, triage, unstarted, and in-progress work remain eligible.
-- Results are ordered by most recently updated, in pages of 50. Use **Load more** to reach the rest; the first page is not the complete workspace inventory.
+- All workflow statuses are eligible, including Done, Canceled, and Duplicate; archived issues remain excluded.
+- Issues are grouped by the exact status name within its category. Identical names in the same category share a group across teams. Categories follow Triage → Backlog → Unstarted → Started → Completed → Canceled → Duplicate, followed by any unknown categories. Within a category, groups follow workflow `position`, then name; when teams give a shared status different positions, the lowest position wins.
+- Click a status header to fold or expand its issues. Headers have no resting background, and each loaded-issue count sits beside its status name on the left. Groups start expanded; each fold choice survives refreshes, filtering, and loading more while the panel instance remains mounted.
+- Issue rows place the identifier, wrapping title, and circular assignee photo side by side. Hover the photo to see the assignee’s full name; it also remains in the accessible label. Missing photos use initials, and unassigned issues use a neutral person icon. Oversized identifiers truncate within their column and remain available in a tooltip.
+- Results are fetched most recently updated first, in pages of 50, then grouped locally. Use **Load more** to reach the rest; the first page is not the complete workspace inventory. Header counts represent loaded issues, not server-wide totals. Within each group, issues retain their API order.
 - Refresh is explicit; there is no background issue polling. Clicking an issue inserts `Let's analyze this linear issue: {IDENTIFIER}` into the focused agent's input, without pressing Enter. The identifier is Linear's human-readable key (for example `RIFF-62`), not its internal UUID or title. This integration never creates, updates, or deletes Linear issues.
 - Disconnect removes the saved credential on this computer; it does not revoke the key in Linear. Revoke it separately from Security & Access if needed.
 
@@ -109,6 +116,10 @@ Issue prompts are inserted at the current input cursor without clearing existing
 ### Requirements and research
 
 The API endpoint is `https://api.linear.app/graphql`. Personal keys use the raw key in the `Authorization` header; OAuth tokens instead use `Bearer`. GraphQL errors must be handled even when HTTP status is 200. Team restrictions and workspace policy determine the accessible issue set.
+
+The issue query selects `state { id name type position }` and nullable `assignee { id name avatarUrl }`. Workflow states are team-specific and names are customizable. `type` is the broad category, not the displayed status: both **In Progress** and **In Review** can be `started`, so grouping only by `type` would incorrectly merge them. Preserve `name` for headers and use `type` plus numeric `position` for ordering; do not infer categories from English names. See [Linear issue statuses](https://linear.app/docs/issue-property#issue-status) and the [WorkflowState schema](https://studio.apollographql.com/public/Linear-API/variant/current/schema/reference/objects/WorkflowState).
+
+Herdr loads photos from local files. The helper caches supported `avatarUrl` images under `data/linear-issues/avatars/`, keyed by URL so repeated assignees and later pages reuse the same file. Image requests accept only HTTPS on Linear’s `public.linear.app` CDN, never include the API key, never follow redirects, and are size/time bounded. Missing, unsupported, or failed image downloads leave the issue visible with initials instead. The cache stays local and must not be exported with this setup.
 
 Primary references: [GraphQL and authentication](https://linear.app/developers/graphql), [API-key permissions](https://linear.app/docs/api-and-webhooks), [OAuth/PKCE and refresh](https://linear.app/developers/oauth-2-0-authentication), [filtering](https://linear.app/developers/filtering), [cursor pagination](https://linear.app/developers/pagination), and [rate limits](https://linear.app/developers/rate-limiting).
 
