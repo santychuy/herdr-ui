@@ -153,8 +153,8 @@ export default class Palette extends View {
         if (command === "next-view" || command === "next-filter") {
           window.dispatch_action(command === "next-view" ? NEXT_VIEW : NEXT_FILTER);
         } else if (VIEWS.some(([view]) => view === command)) this.setView(command);
-        else if (command.startsWith("filter-") && FILTERS.includes(command.slice(7))) this.filter = command.slice(7);
-        else if (command.startsWith("sort-") && SORTS.includes(command.slice(5))) {
+        else if (["agents", "terminals"].includes(this.view) && command.startsWith("filter-") && FILTERS.includes(command.slice(7))) this.filter = command.slice(7);
+        else if (["agents", "terminals"].includes(this.view) && command.startsWith("sort-") && SORTS.includes(command.slice(5))) {
           this.sort = command.slice(5);
           localStorage.setItem("navigation.sort", this.sort);
         } else if (command.startsWith("search:")) {
@@ -204,7 +204,7 @@ export default class Palette extends View {
       if (!q) return rows.map(e => ({ e }));
       return rows.map(e => {
         const title = fuzzy(q, e.title);
-        const more = fuzzy(q, `${e.title} ${e.detail} ${e.words} ${STATUS[e.status] ?? e.status}`);
+        const more = fuzzy(q, `${e.title} ${e.detail} ${e.words} ${STATUS[e.status] ?? e.status ?? ""}`);
         const best = title ?? (more && { score: more.score - 4, hits: [] });
         return best && { e, score: best.score, hits: best.hits };
       }).filter(Boolean).sort((a, b) => b.score - a.score);
@@ -252,6 +252,7 @@ export default class Palette extends View {
     const rows = this.rows();
     const bound = keys();
     const platform = win()?.platform ?? "macos";
+    const statusView = this.view === "agents" || this.view === "terminals";
     this.at = Math.max(0, Math.min(this.at, rows.length - 1));
     // One continuous strip: each row (and the group title before it) at a
     // fixed y. Scrolling moves the strip in pixels, only as far as it takes to
@@ -305,9 +306,9 @@ export default class Palette extends View {
           .hover((s) => s.bg(t.hover))
           .on_click(() => this.go(r.e))
           .role("button")
-          .accessibility_label(`${r.e.title}. ${r.e.detail ?? r.e.group}. ${STATUS[r.e.status] ?? ""}${r.e.available === false ? ". Machine is unavailable; this item cannot be opened." : ""}`)
+          .accessibility_label(`${r.e.title}. ${r.e.detail ?? r.e.group}.${statusView ? ` ${STATUS[r.e.status] ?? ""}` : ""}${r.e.available === false ? " Machine is unavailable; this item cannot be opened." : ""}`)
           .when(Boolean(k), el => el.tooltip(shortcutLabel(k, platform)))
-          .when(this.view === "agents" || this.view === "terminals", el => el.child(div().w(18).flex_none()
+          .when(statusView, el => el.child(div().w(18).flex_none()
             .accessibility_label(r.e.program?.name ?? r.e.group)
             .when(Boolean(r.e.program?.icon), slot => slot.child(r.e.program.tint
               ? svg(r.e.program.icon).size(16).text_color(on ? t.foreground : t.muted)
@@ -315,7 +316,7 @@ export default class Palette extends View {
           .child(v_flex().flex_1().min_w(0).gap(2)
             .child(div().truncate().child(this.title(t, r.e.title, r.hits, on)))
             .when(Boolean(r.e.detail), el => el.child(div().truncate().text_size(10.5).text_color(t.dim).child(r.e.detail))))
-          .when(this.view !== "commands", el => el.child(div().flex_none().text_size(11)
+          .when(statusView, el => el.child(div().flex_none().text_size(11)
             .text_color(t[r.e.status] ?? (r.e.status === "done" ? t.ansi2 : t.dim))
             .child(r.e.reviewed ? "Reviewed" : STATUS[r.e.status] ?? r.e.status)))
           .when(this.view === "commands" && Boolean(this.query), (el) => el.child(div().text_size(11.5).text_color(t.dim).child(r.e.group)))
@@ -332,7 +333,7 @@ export default class Palette extends View {
         cx.stop_propagation(); cx.notify();
       })
       .on_action(NEXT_FILTER, (_e, cx) => {
-        if (this.view !== "commands") {
+        if (statusView) {
           this.filter = FILTERS[(FILTERS.indexOf(this.filter) + 1) % FILTERS.length];
           this.at = 0; this.scroll = 0;
         }
@@ -377,7 +378,7 @@ export default class Palette extends View {
           .child(Input.new(this.input).flex_1().h_full().text_size(12.8).text_color(t.foreground))
           .child(div().text_size(11).text_color(t.dim).child("Esc")),
       )
-      .when(this.view !== "commands", el => el.child(h_flex().gap(5).items_center()
+      .when(statusView, el => el.child(h_flex().gap(5).items_center()
         .child(h_flex().gap(5).tooltip(shortcutLabel("shift-tab", platform)).children(FILTERS.map(filter => div().id(`palette-filter-${filter}`).px(7).py(4).rounded(5).text_size(10.5).cursor_pointer()
           .text_color(this.filter === filter ? t.foreground : t.dim).bg(this.filter === filter ? t.selected : t.popover)
           .role("button").accessibility_label(`Filter ${filter}`).on_click((_e, cx) => {
@@ -408,10 +409,10 @@ export default class Palette extends View {
               })
               .children(fixed ? list : [v_flex().children(list)])
           : div().px(16).py(14).text_size(13).text_color(t.dim).child(this.query ? `Nothing matches "${this.query}".`
-              : this.view === "agents" ? "No live agents match this filter." : "No items match this status filter."),
+              : this.view === "projects" ? "No projects available." : this.view === "agents" ? "No live agents match this filter." : "No items match this status filter."),
       )
       .child(h_flex().pt(6).gap(8).text_size(10.5).text_color(t.dim)
-        .child(div().flex_1().child(`↑↓ Navigate   Enter Open   Tab View${this.view !== "commands" ? "   Shift+Tab Filter" : ""}   Esc Close`))
+        .child(div().flex_1().child(`↑↓ Navigate   Enter Open   Tab View${statusView ? "   Shift+Tab Filter" : ""}   Esc Close`))
         .child(`${rows.length} ${this.view === "commands" ? (rows.length === 1 ? "command" : "commands") : (rows.length === 1 ? "result" : "results")}`));
   }
 }
