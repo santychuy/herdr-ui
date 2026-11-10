@@ -121,6 +121,8 @@ function fuzzy(q, text) {
   return { score: score - text.length * 0.02, hits };
 }
 
+const ICON_TINTS = { red: "ansi1", amber: "ansi3", green: "ansi2", teal: "ansi6", blue: "ansi4", purple: "ansi5" };
+
 export default class Palette extends View {
   init(_props, cx) {
     this.query = "";
@@ -253,6 +255,7 @@ export default class Palette extends View {
     const bound = keys();
     const platform = win()?.platform ?? "macos";
     const statusView = this.view === "agents" || this.view === "terminals";
+    const projectIcons = this.view === "projects" ? shared("space.icons") ?? {} : {};
     this.at = Math.max(0, Math.min(this.at, rows.length - 1));
     // One continuous strip: each row (and the group title before it) at a
     // fixed y. Scrolling moves the strip in pixels, only as far as it takes to
@@ -292,6 +295,7 @@ export default class Palette extends View {
       if (!visible(row, row + ROW_H)) return;
       const on = i === this.at;
       const k = this.view === "commands" ? commandKey(r.e, bound, shared("layout")) : null;
+      const projectIcon = projectIcons[r.e.args?.id];
       list.push(
         place(h_flex(), row, row + ROW_H)
           .id(`pl-${i}`)
@@ -313,6 +317,11 @@ export default class Palette extends View {
             .when(Boolean(r.e.program?.icon), slot => slot.child(r.e.program.tint
               ? svg(r.e.program.icon).size(16).text_color(on ? t.foreground : t.muted)
               : image(r.e.program.icon).size(16)))))
+          .when(this.view === "projects", el => el.child(div().size(18).flex_none().flex().items_center().justify_center()
+            .child(projectIcon?.kind === "custom"
+              ? image(projectIcon.path).size(18).rounded(2)
+              : svg(`mods/project-icons/icons/${projectIcon?.name ?? "folder-01"}.svg`).size(16)
+                .text_color(t[ICON_TINTS[projectIcon?.color]] ?? t.muted))))
           .child(v_flex().flex_1().min_w(0).gap(2)
             .child(div().truncate().child(this.title(t, r.e.title, r.hits, on)))
             .when(Boolean(r.e.detail), el => el.child(div().truncate().text_size(10.5).text_color(t.dim).child(r.e.detail))))
