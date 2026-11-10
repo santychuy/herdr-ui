@@ -115,6 +115,9 @@ function fuzzy(q, text) {
     hits.push(i);
     at = i + 1;
   }
+  // Prefer literal names/prefixes over scattered initials; queries omit spaces.
+  const compact = t.replace(/\s+/g, "");
+  score += compact === q ? 24 : compact.startsWith(q) ? 12 : compact.includes(q) ? 6 : 0;
   return { score: score - text.length * 0.02, hits };
 }
 
@@ -198,12 +201,13 @@ export default class Palette extends View {
     if (this.view !== "commands") {
       const rows = navigation({ spaces: spaces(), agents: agents(), terminals: terminals(), panes: panes(), machines: machines() }, this.view, this.filter, this.sort);
       const q = this.query.trim().toLowerCase().replace(/\s+/g, "");
+      if (!q) return rows.map(e => ({ e }));
       return rows.map(e => {
-        if (!q) return { e };
         const title = fuzzy(q, e.title);
         const more = fuzzy(q, `${e.title} ${e.detail} ${e.words} ${STATUS[e.status] ?? e.status}`);
-        return (title || more) && { e, hits: title?.hits ?? [] };
-      }).filter(Boolean);
+        const best = title ?? (more && { score: more.score - 4, hits: [] });
+        return best && { e, score: best.score, hits: best.hits };
+      }).filter(Boolean).sort((a, b) => b.score - a.score);
     }
     const all = entries();
     const q = this.query.trim().toLowerCase().replace(/\s+/g, "");
