@@ -79,3 +79,36 @@ test("a shell entering and leaving an agent session updates both inventories wit
   assert.deepEqual(rows(data, "agents"), []);
   assert.equal(rows(data, "terminals").find(row => row.id === "terminal:shell"), undefined);
 });
+
+test("project directories follow their own live panes, with machine-qualified tabs and saved-folder fallback", () => {
+  const data = {
+    spaces: [
+      { id: "home", name: "Home", folder: "/fork", tabs: [{ id: "tab", index: 1 }] },
+      { id: "fork", name: "Fork", folder: "/maquila", tabs: [{ id: "fork-tab", index: 1 }] },
+      { id: "remote/home", name: "Remote home", machine: "remote", folder: "/old", tabs: [{ id: "remote/tab", index: 1 }] },
+      { id: "notes", name: "Notes", folder: "/notes", tabs: [{ id: "notes-tab", index: 1 }] },
+      { id: "empty", name: "Empty", folder: "", tabs: [] },
+    ],
+    panes: [
+      { tab: "remote/tab", terminal: "remote/t1", cwd: "/remote/home" },
+      { tab: "fork-tab", terminal: "t2", cwd: "/fork" },
+      { tab: "tab", terminal: "t1", cwd: null },
+      { tab: "tab", terminal: "t3", cwd: "/home" },
+      { tab: "tab", terminal: "t4", cwd: "/other-split" },
+      { tab: "notes-tab", terminal: null, mod: "markdown" },
+    ],
+    agents: [], terminals: [], machines: [],
+  };
+  const projects = rows(data, "projects");
+  assert.deepEqual(projects.map(row => [row.args.id, row.detail]), [
+    ["home", "Local · 1 threads · /home"],
+    ["fork", "Local · 1 threads · /fork"],
+    ["remote/home", "remote · 1 threads · /remote/home"],
+    ["notes", "Local · 1 threads · /notes"],
+    ["empty", "Local · 0 threads · ~"],
+  ]);
+  assert(!projects[0].words.includes("/fork"));
+  assert(projects[0].words.includes("/home"));
+  data.panes[3].cwd = "/home/moved";
+  assert.equal(rows(data, "projects")[0].detail, "Local · 1 threads · /home/moved");
+});

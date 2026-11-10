@@ -17,11 +17,14 @@ export function navigation(data, view, filter, sort) {
   if (view === "projects") {
     rows = data.spaces.map(space => {
       const children = threads.filter(row => row.space.id === space.id);
+      const tabs = new Set(space.tabs.map(tab => tab.id));
+      // Match the sidebar: this project's first live pane folder, then its saved folder.
+      const folder = data.panes.find(pane => tabs.has(pane.tab) && pane.cwd)?.cwd || space.folder || "~";
       const urgent = [...children].sort((a, b) => b.rank - a.rank)[0];
       const available = !["loading", "unavailable"].includes(data.machines.find(m => m.name === (space.machine ?? null))?.layout);
       return { id: `space:${space.id}`, name: "space.select", args: { id: space.id }, title: space.name,
-        group: "Project", words: `${space.folder} ${space.branch ?? ""} ${children.map(r => r.title).join(" ")}`,
-        detail: `${space.machine ?? "Local"} · ${children.length} threads · ${space.folder || "~"}`,
+        group: "Project", words: `${folder} ${space.branch ?? ""} ${children.map(r => r.title).join(" ")}`,
+        detail: `${space.machine ?? "Local"} · ${children.length} threads · ${folder}`,
         status: available ? urgent?.status ?? "none" : "unavailable", available,
         needsAttention: children.some(r => r.needsAttention), reviewed: children.length > 0 && children.every(r => r.reviewed),
         rank: urgent?.rank ?? 0, seq: Math.max(0, ...children.map(r => r.tab.changed_at ?? 0)), project: space.name };

@@ -116,7 +116,7 @@ Cmd+K opens `my-palette` with **Agents** selected on each opening. Four views sh
 
 - **Agents — default:** live primary agents, split-pane agents, and reporting/recognized subagents only. Plain shells, non-agent child programs, and mod-only tabs never fill the agent list. Working, blocked, unread, and idle agents remain visible under **All**; choose **Working** to narrow to that status.
 - **Terminals:** individual terminals across local and remote projects, including shells, agent-hosting terminals, and background descendants. Split panes have separate rows; promoted child terminals are not duplicated. Each row shows project, machine, tab, terminal address, and live folder when available. Mod-only tabs remain accessible here as explicitly labeled **Mod tab** entries.
-- **Projects:** spaces across local and remote machines, with thread counts, folders, and rolled-up status.
+- **Projects:** spaces across local and remote machines, with thread counts, live folders, and rolled-up status. Folder display and search use the first pane with a known directory belonging to that project's machine-qualified tabs, falling back to its saved folder (or `~` when empty), just like the sidebar.
 - **Commands & keys:** the existing searchable command catalog, recent commands, and effective shortcut labels for the current layout.
 
 Agent rows show their harness's Herdr program icon in a fixed left-hand column, including split-pane agents and subagents. Terminal rows use their own program icons. Monochrome glyphs follow the theme; full-color logos keep their original colors. Rows without an icon retain alignment without an invented logo.
