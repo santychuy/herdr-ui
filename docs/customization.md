@@ -193,7 +193,7 @@ Primary references: [GraphQL and authentication](https://linear.app/developers/g
 
 ## Diagrams panel
 
-The current repository snapshot does not include `mods/diagrams/`. These notes describe the locally installed mod; importing this repository alone does not install it.
+This repository includes `mods/diagrams/`, its bundled Pele renderer and license. Importing the layout installs the viewer and its agent/CLI interface; generated diagrams remain local and are not exported.
 
 **Diagrams** in the top navigation opens a native SVG viewer in the right-side panel. Agents can write Mermaid source to a file, then publish it directly to that panel:
 
