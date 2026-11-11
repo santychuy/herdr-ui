@@ -1,6 +1,6 @@
 # Santychuy
 
-An agent-work layout with an expandable project/thread tree and subscription usage on the left, slim tabs above rounded terminal cards, an agent-first Cmd+K switcher, and Files, Changes, My PRs, Linear Issues and Mermaid Diagrams on the right. It follows the system appearance with Paper in light mode and GitHub Dark in dark mode. This is a native Herdr layout, not a separate terminal app; the screenshot's Pi terminal interface belongs to the program running inside the pane, not to the layout.
+An agent-work layout with an expandable project/thread tree and subscription usage on the left, slim tabs above rounded terminal cards, an agent-first Cmd+K switcher, and Files, Changes, My PRs, Linear Issues and Mermaid Diagrams on the right. It follows the system appearance with Paper in light mode and Neon Bone (imported from Rex) in dark mode. GitHub Dark remains selectable. This is a native Herdr layout, not a separate terminal app; the screenshot's Pi terminal interface belongs to the program running inside the pane, not to the layout.
 
 ![Santychuy](preview.png)
 
@@ -18,7 +18,9 @@ All dimensions below are logical pixels before Herdr zoom.
 
 The window has no system title bar; macOS traffic lights are at `[12, 16]`. Bars marked draggable move the window. Native minimize/maximize/close controls appear where Herdr reports they are needed. Fonts inherit the person's settings, otherwise Herdr's bundled fonts. This package's personal settings use zoom 1.2, sounds enabled and minimum terminal contrast 1.
 
-GitHub Dark uses background `#010409`, foreground/cursor `#e6edf3`, selection `#264f78`, and these ANSI colors in order: `#484f58`, `#ff7b72`, `#3fb950`, `#d29922`, `#58a6ff`, `#bc8cff`, `#39c5cf`, `#b1bac4`, `#6e7681`, `#ffa198`, `#56d364`, `#e3b341`, `#79c0ff`, `#d2a8ff`, `#56d4dd`, `#ffffff`. Other panel/status colors are theme-derived, not fixed dark-only colors.
+Neon Bone (`themes/neon-bone.json`) uses background `#000000`, foreground `#dad9c7`, selection `#b2ceee`, cursor `#19cde6`, and these ANSI colors in order: `#ff00ff`, `#f6188f`, `#1ebb2b`, `#fdf834`, `#58a6ff`, `#f85a21`, `#12c3e2`, `#ffffff`, `#7f7094`, `#f841a0`, `#25c141`, `#fdf454`, `#79c0ff`, `#f97137`, `#19cde6`, `#ffffff`. These are the actual values from Rex's My Theme; Herdr derives panel colors and does not expose Rex's separate selection-text/cursor-text colors.
+
+GitHub Dark remains available and uses background `#010409`, foreground/cursor `#e6edf3`, selection `#264f78`, and these ANSI colors in order: `#484f58`, `#ff7b72`, `#3fb950`, `#d29922`, `#58a6ff`, `#bc8cff`, `#39c5cf`, `#b1bac4`, `#6e7681`, `#ffa198`, `#56d364`, `#e3b341`, `#79c0ff`, `#d2a8ff`, `#56d4dd`, `#ffffff`. Other panel/status colors are theme-derived, not fixed dark-only colors.
 
 ## How it behaves
 
@@ -80,7 +82,7 @@ Terminal-specific bindings preserve Cmd+C copy, Cmd+V paste, Ctrl+V paste-image;
 
 ## Built from
 
-Build native GPUI JavaScript views (`gpui-kit`, `gpui-base`, `herdr`), not HTML/CSS/DOM or a web view. Start with the installed Herdr guide and generated type definitions for the target version. Put everything in one package root with `RECIPE.md`, `preview.png`, `layouts/santychuy.json`, `mods/`, `themes/github-dark.json`, optional merged `keys.json` and `programs.json`. All custom mod manifests use `place: none`; the layout/overlays decide placement.
+Build native GPUI JavaScript views (`gpui-kit`, `gpui-base`, `herdr`), not HTML/CSS/DOM or a web view. Start with the installed Herdr guide and generated type definitions for the target version. Put everything in one package root with `RECIPE.md`, `preview.png`, `layouts/santychuy.json`, `mods/`, `themes/neon-bone.json`, `themes/github-dark.json`, optional merged `keys.json` and `programs.json`. All custom mod manifests use `place: none`; the layout/overlays decide placement.
 
 The layout node tree is:
 
@@ -105,7 +107,7 @@ root row (canvas, border divider, titlebar none)
    └─ work-bottom-inset column (empty, fixed 6px)
 ```
 
-The sidebar's internal lists alone opt into resizing; `sidebar` and `work` have `resizable: false`. Root theme is `{light: paper, dark: github-dark}`, `terminal_opacity: 0`, `terminal_padding: [10,4]`. The active-tab pane definition supplies all card/header styling above. Do not manufacture saved terminal IDs in the layout.
+The sidebar's internal lists alone opt into resizing; `sidebar` and `work` have `resizable: false`. Root theme is `{light: paper, dark: neon-bone}`, `terminal_opacity: 0`, `terminal_padding: [10,4]`. The active-tab pane definition supplies all card/header styling above. Do not manufacture saved terminal IDs in the layout.
 
 ### Mod responsibilities and APIs
 
