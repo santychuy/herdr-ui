@@ -20,9 +20,3 @@ This is a separate layout, not a separate app or a replacement for Herdr.
 See [Setup and syncing](docs/setup.md) for installing on another machine, importing the configuration, and exporting changes back to this repository.
 
 For shortcuts, mod behavior, and implementation details, see [Customization notes](docs/customization.md).
-
-## Rebuild or share
-
-[RECIPE.md](RECIPE.md) is the build-from-empty brief for **Santychuy**: appearance, interactions, dependencies, permissions, and acceptance checks. This repository root is the layout's gallery package: `layouts/`, all required custom `mods/`, `themes/`, `keys.json`, `programs.json`, the recipe, and the inspected `preview.png`.
-
-The public repository uses the `herdr-layout` topic for discovery in the [Herdr gallery](https://herdr.dev/gallery/). Herdr documents indexing within an hour; community previews are screened before appearing.
