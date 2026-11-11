@@ -10,7 +10,7 @@ Personal layout for [Herdr](https://herdr.dev), with custom mods, keybindings, a
 - **Cmd+K switcher** — jump between agents, terminals, projects, and commands.
 - **Subscription usage** — provider quotas and reset times in the sidebar.
 - **Linear Issues** — browse issues and add an issue prompt to the focused agent's draft.
-- **Personal styling** — slim tabs, rounded terminal panes, and Paper / GitHub Dark themes.
+- **Personal styling** — slim tabs, rounded terminal panes, and Paper, Neon Bone (imported from Rex), and GitHub Dark themes.
 - **Side panels** — Files, Changes, My PRs, Linear Issues, and locally rendered Mermaid diagrams.
 
 This is a separate layout, not a separate app or a replacement for Herdr.
